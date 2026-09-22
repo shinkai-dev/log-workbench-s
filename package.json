@@ -1,0 +1,47 @@
+{
+  "name": "log-workbench-s",
+  "displayName": "Log Workbench S",
+  "description": "Local log analysis and inspection tool for VS Code with filtering, sorting, timestamp analysis, and performance statistics.",
+  "version": "1.0.0",
+  "publisher": "Shinkai",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:logWorkbenchS.openLog"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "logWorkbenchS.openLog",
+        "title": "Open with Log Workbench S"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "logWorkbenchS.openLog",
+          "when": "resourceFilename =~ /\\.(log|txt|out|trace|json|csv)$/i",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "logWorkbenchS.openLog",
+          "when": "resourceFilename =~ /\\.(log|txt|out|trace|json|csv)$/i",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shinkai-dev/log-workbench-s.git"
+  },
+  "icon": "assets/icon.png"
+}

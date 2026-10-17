@@ -2,7 +2,7 @@
   "name": "log-workbench-s",
   "displayName": "Log Workbench S",
   "description": "Local log analysis and inspection tool for VS Code with filtering, sorting, timestamp analysis, and performance statistics.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "Shinkai",
   "engines": {
     "vscode": "^1.90.0"
@@ -43,5 +43,5 @@
     "type": "git",
     "url": "https://github.com/shinkai-dev/log-workbench-s.git"
   },
-  "icon": "assets/icon.png"
+  "icon": "webview/assets/icon.png"
 }

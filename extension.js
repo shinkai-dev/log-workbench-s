@@ -1,6 +1,7 @@
 const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 
 let currentPanel;
 
@@ -45,9 +46,9 @@ async function showLogWorkbench(uri, text) {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [
-          vscode.Uri.file(path.join(__dirname, "css")),
-          vscode.Uri.file(path.join(__dirname, "js")),
-          vscode.Uri.file(path.join(__dirname, "assets"))
+          vscode.Uri.file(path.join(__dirname, "webview", "css")),
+          vscode.Uri.file(path.join(__dirname, "webview", "js")),
+          vscode.Uri.file(path.join(__dirname, "webview", "assets"))
         ]
       }
     );
@@ -56,9 +57,31 @@ async function showLogWorkbench(uri, text) {
       currentPanel = undefined;
     });
 
-    currentPanel.webview.onDidReceiveMessage(message => {
+    currentPanel.webview.onDidReceiveMessage(async message => {
       if (message?.type === "ready") {
         sendCurrentLog();
+        return;
+      }
+      if (message?.type === "exportCsv" && typeof message.content === "string") {
+        try {
+          const suggestedName = typeof message.fileName === "string" && message.fileName.trim()
+            ? path.basename(message.fileName)
+            : "log.csv";
+          const target = await vscode.window.showSaveDialog({
+            defaultUri: vscode.Uri.file(path.join(os.homedir(), suggestedName)),
+            saveLabel: "Export CSV",
+            filters: { "CSV files": ["csv"] }
+          });
+          if (!target) {
+            currentPanel?.webview.postMessage({ type: "csvExportResult", status: "cancelled" });
+            return;
+          }
+          await vscode.workspace.fs.writeFile(target, Buffer.from(message.content, "utf8"));
+          currentPanel?.webview.postMessage({ type: "csvExportResult", status: "success", path: target.fsPath });
+        } catch (error) {
+          vscode.window.showErrorMessage(`Log Workbench S: CSV export failed. ${error?.message || error}`);
+          currentPanel?.webview.postMessage({ type: "csvExportResult", status: "error" });
+        }
       }
     });
   } else {
@@ -68,7 +91,7 @@ async function showLogWorkbench(uri, text) {
   currentPanel._logUri = uri;
   currentPanel._logName = path.basename(uri.fsPath);
   currentPanel._logText = text;
-  currentPanel.title = `Log Workbench S — ${currentPanel._logName}`;
+  currentPanel.title = currentPanel._logName;
 
   if (!currentPanel.webview.html) {
     currentPanel.webview.html = getWebviewContent(currentPanel.webview);
@@ -88,18 +111,18 @@ function sendCurrentLog() {
 }
 
 function getWebviewContent(webview) {
-  const htmlPath = path.join(__dirname, "index.html");
+  const htmlPath = path.join(__dirname, "webview", "index.html");
   let html = fs.readFileSync(htmlPath, "utf8");
 
   const nonce = getNonce();
   const cssUri = webview.asWebviewUri(
-    vscode.Uri.file(path.join(__dirname, "css", "app.css"))
+    vscode.Uri.file(path.join(__dirname, "webview", "css", "app.css"))
   );
   const jsUri = webview.asWebviewUri(
-    vscode.Uri.file(path.join(__dirname, "js", "app.js"))
+    vscode.Uri.file(path.join(__dirname, "webview", "js", "app.js"))
   );
   const faviconUri = webview.asWebviewUri(
-    vscode.Uri.file(path.join(__dirname, "assets", "favicon.svg"))
+    vscode.Uri.file(path.join(__dirname, "webview", "assets", "favicon.svg"))
   );
 
   html = html
